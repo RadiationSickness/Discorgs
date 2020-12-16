@@ -9,7 +9,7 @@
     "start:local": "npm run build && node dist/src/index.js"
   },
   "author": "https://github.com/RadiationSickness",
-  "license": "ISC",
+  "license": "Creative Commons Zero v1.0 Universal",
   "dependencies": {
     "discord.js": "^12.5.1",
     "dotenv": "^8.2.0",
