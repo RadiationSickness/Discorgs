@@ -1,0 +1,2 @@
+# Discorgs
+Discorgs is a node based bot used to integrate into your discord server. The bot will monitor the Discogs profiles of the users you provide and post updates to the provided discord channel regarding new additions to collections and want lists.
