@@ -1,14 +1,18 @@
-import { DiscogsService } from "./services/discogs/discogsService";
-import { EmbedMessageType } from "./services/discord/discordTypes";
-import { DiscordService } from "./services/discord/discrodService";
+import { DiscogsService } from './services/discogs/discogsService';
+import { DiscordService } from './services/discord/discrodService';
+import { DiscordDataBuilder } from './builders/discord/discordDataBuilder';
+import { ReleasesResponseType } from './builders/discogs/types/releasesResponseTypes';
+import { UserResponseType } from './builders/discogs/types/userResponseTypes';
 
 export class Discorg {
     public discogsService: DiscogsService;
     public discordService: DiscordService;
+    public discordDataBuilder: DiscordDataBuilder;
 
     constructor() {
         this.discogsService = new DiscogsService();
         this.discordService = new DiscordService();
+        this.discordDataBuilder = new DiscordDataBuilder();
     }
 
     public async start() {
@@ -16,24 +20,11 @@ export class Discorg {
             status ? console.log('Login Successful!') : console.error('Login Failed');
 
             if (status) {
-                const response = await this.discogsService.getReleases('Tyharo');
-                const user = await this.discogsService.getUser('Tyharo');
-                console.log(user);
-                const embedParams: EmbedMessageType = {
-                    color: '#666666',
-                    title: response.releases[0].basic_information.title,
-                    url: response.releases[0].basic_information.master_url,
-                    userImage: user.avatar_url,
-                    description: 'foobar',
-                    thumbnailUrl: response.releases[0].basic_information.cover_image,
-                    userName: 'Tyharo',
-                    artist: response.releases[0].basic_information.artists,
-                    labels: response.releases[0].basic_information.labels,
-                    genres: response.releases[0].basic_information.genres,
-                    styles: response.releases[0].basic_information.styles,
-                    year: response.releases[0].basic_information.year,
-                };
-                this.discordService.sendEmbed(embedParams);
+                // const response: ReleasesResponseType = await this.discogsService.getReleases('Tyharo');
+                // const user: UserResponseType = await this.discogsService.getUser('Tyharo');
+
+                // const embedMessage = this.discordDataBuilder.buildEmbedMessage(response);
+                // this.discordService.sendEmbed(embedParams);
             }
         });
     }

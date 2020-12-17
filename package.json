@@ -11,6 +11,7 @@
   "author": "https://github.com/RadiationSickness",
   "license": "Creative Commons Zero v1.0 Universal",
   "dependencies": {
+    "@types/lodash": "4.14.165",
     "discord.js": "^12.5.1",
     "dotenv": "^8.2.0",
     "save": "^2.4.0"
