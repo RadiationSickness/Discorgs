@@ -18,13 +18,13 @@ export class DiscordDataBuilder {
             .setThumbnail(params.userImage)
             .addFields(
                 { name: 'Collection Update', value: `${params.userName} added ${params.title} by ${params.artist} to their collection!` },
-                { name: 'Artist', value: params.artist[0].name, inline: true },
+                { name: 'Artist', value: params.artist, inline: true },
                 { name: 'Year', value: params.year.toString(), inline: true },
-                { name: 'Label', value: params.labels[0].name, inline: true },
+                { name: 'Label', value: params.labels, inline: true },
                 { name: 'Genres', value: params.genres, inline: true },
                 { name: 'Styles', value: params.styles, inline: true },
             )
-            .setImage(params.thumbnailUrl)
+            .setImage(params.mediaImage)
             .setTimestamp()
             .setFooter('Dircorgs thinks you should buy more records', 'attachment://discogsIcon.png');
 

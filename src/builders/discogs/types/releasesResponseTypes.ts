@@ -45,7 +45,7 @@ type ReleasesFormatsType = {
     descriptions: string[]
 }
 
-type ReleasesLabelsType = {
+export type ReleasesLabelsType = {
     name: string,
     catno: string,
     entity_type: string,
@@ -54,7 +54,7 @@ type ReleasesLabelsType = {
     resource_url: string,
 }
 
-type ReleasesArtistsType = {
+export type ReleasesArtistsType = {
     name: string,
     anv: string,
     join: string,

@@ -1,10 +1,10 @@
 export type EmbedMessageType = {
-    artist: Record<string, string>[],
+    artist: string,
     color: string,
     genres: string,
-    labels: Record<string, string>[],
+    labels: string,
     styles: string,
-    thumbnailUrl: string,
+    mediaImage: string,
     title: string,
     url: string,
     userImage: string,
