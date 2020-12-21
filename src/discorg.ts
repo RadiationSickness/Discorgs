@@ -1,11 +1,10 @@
-import { MessageEmbed } from 'discord.js';
+import { Client, TextChannel } from 'discord.js';
 import { DiscogsService } from './services/discogs/discogsService';
 import { DiscordService } from './services/discord/discrodService';
 import { DiscordDataBuilder } from './builders/discord/discordDataBuilder';
-import { ReleasesResponseType } from './builders/discogs/types/releasesResponseTypes';
-import { UserResponseType } from './builders/discogs/types/userResponseTypes';
 import { DiscogsDataBuilder } from './builders/discogs/dataBuilder';
-import { EmbedMessageType } from './builders/discord/discordTypes';
+import { MessageListener } from './services/messageListener/messageListener';
+import { Commands } from './services/messageListener/commands';
 
 export class Discorg {
     public discogsService: DiscogsService;
@@ -21,16 +20,25 @@ export class Discorg {
     }
 
     public async start() {
-        await this.discordService.login().then(async (status: string|undefined) => {
-            status ? console.log('Login Successful!') : console.error('Login Failed');
+        console.log('Logging in, this may take up to 1 minute...');
+
+        await this.discordService.login().then(async (status: boolean) => {
+            status ? console.log('Login Successful!') : console.error('Login Failed!');
 
             if (status) {
-                // this.discordService.enableMessageListener();
-                const response: ReleasesResponseType = await this.discogsService.getReleases('Tyharo');
-                const user: UserResponseType = await this.discogsService.getUser('Tyharo');
+                console.log('Initializing...');
+                const commandsInstance: Commands = new Commands(this.discogsService, this.discordService);
+                const messageListener = new MessageListener(
+                    this.discordService,
+                    commandsInstance,
+                );
+                messageListener.startMessageListener();
+                console.log('Ready');
+                // const response: ReleasesResponseType = await this.discogsService.getReleases('Tyharo');
+                // const user: UserResponseType = await this.discogsService.getUser('Tyharo');
 
-                const singleEmbedData: EmbedMessageType = this.discogsDataBuilder.buildReleaseEmbedMessageData(response.releases[0], user);
-                const messageEmbed: MessageEmbed = this.discordDataBuilder.buildEmbedMessage(singleEmbedData);
+                // const singleEmbedData: EmbedMessageType = this.discogsDataBuilder.buildReleaseEmbedMessageData(response.releases[0], user);
+                // const messageEmbed: MessageEmbed = this.discordDataBuilder.buildEmbedMessage(singleEmbedData);
                 // this.discordService.sendEmbed(messageEmbed);
             }
         });
