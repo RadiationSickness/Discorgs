@@ -1,0 +1,15 @@
+version: "3"
+networks:
+  discorgs_network:
+    external: false
+services:
+  discorgs:
+    networks:
+      - discorgs_network
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080

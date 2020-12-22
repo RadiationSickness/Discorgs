@@ -4,8 +4,8 @@
 	"description": "Discrod bot used to integrate with Discogs.",
 	"main": "index.js",
 	"scripts": {
-		"build": "tsc",
-		"build:watch": "tsc --watch",
+		"build": "tsc -p tsconfig.json",
+		"build:watch": "tsc -p tsconfig.json --watch",
 		"start": "node dist/src/index.js",
 		"start:local": "concurrently -n tsc,bot \"npm run build:watch\" \"nodemon dist/src/index.js\""
 	},
