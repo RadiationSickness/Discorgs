@@ -34,3 +34,7 @@ export type UserResponseType = {
     num_collection: number,
     num_wantlist: number,
 }
+
+export type UserNotFoundResponse = {
+    message: string,
+}

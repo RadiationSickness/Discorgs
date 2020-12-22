@@ -1,4 +1,5 @@
 import * as https from 'https';
+import { UserNotFoundResponse } from '../../builders/discogs/types/userResponseTypes';
 
 export class DiscogsService {
     public signatureMethod = 'PLAINTEXT';
@@ -29,6 +30,10 @@ export class DiscogsService {
       const endPoint: string = `/users/${user}/collection/folders`;
       return await this.get(endPoint);
     };
+
+    public isErrorResponse(response: any): response is UserNotFoundResponse {
+      return response.message !== undefined;
+    }
 
     private get(endPoint: string, containsQueryParams: boolean = false): Promise<{}> {
       const authParams = `key=${process.env.DISCOGS_KEY}&secret=${process.env.DISCOGS_SECRET}`

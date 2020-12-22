@@ -18,7 +18,7 @@ export class MessageListener {
         this.botId = process.env.DISCORD_BOT_ID || '';
     }
 
-    public startMessageListener() {
+    public startMessageListener(): void {
         this.discordClient.on('message', (message: Message) => {
             if (this.discordChannel && this.messageContainsBotMention(message)) {
                 message.member?.hasPermission('ADMINISTRATOR' || 'KICK_MEMBERS')

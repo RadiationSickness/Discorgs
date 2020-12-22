@@ -1,6 +1,9 @@
 export const messageCommands: Record<string, string> = {
-    getHelp: 'help',
     addDiscogsUser: 'add user',
-    removeUser: 'remove user',
-    getDiscogsUsers: 'get users'
+    getDiscogsUsers: 'get users',
+    getHelp: 'help',
+    getLatestAdditionToCollection: 'get latest addition for',
+    getRandomRelease: 'get random release',
+    removeDiscogsUser: 'remove user',
+    searchRegisteredUsers: 'search for user',
 }
