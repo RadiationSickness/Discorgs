@@ -1,6 +1,5 @@
 
-import { TextChannel, MessageEmbed, MessageAttachment } from 'discord.js';
-import { Assets } from '../../builders/discord/assets';
+import { TextChannel, MessageEmbed } from 'discord.js';
 import { DiscogsService } from '../discogs/discogsService';
 import { DiscordService } from '../discord/discrodService';
 import { Nullable } from '../../universalTypes';

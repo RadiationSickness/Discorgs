@@ -42,10 +42,4 @@ export class DiscordDataBuilder {
 
         return embed;
     }
-
-    private buildStaticAssets(): void {
-        this.staticAssets.push(new MessageAttachment('./src/assets/discogsIcon.png', 'discogsIcon.png'));
-        this.staticAssets.push(new MessageAttachment('./src/assets/discorgIcon.jpg', 'discorgIcon.jpg'));
-    }
 }
->>>>>>> Stashed changes
