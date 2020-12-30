@@ -15,6 +15,7 @@
 		"@types/lodash": "4.14.165",
 		"discord.js": "^12.5.1",
 		"dotenv": "^8.2.0",
+		"mongoose": "5.11.9",
 		"save": "^2.4.0"
 	},
 	"devDependencies": {

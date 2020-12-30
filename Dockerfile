@@ -1,14 +1,13 @@
-FROM node:15.4.0-alpine
+FROM node:15.4.0-alpine as base
 
-WORKDIR /user/src/app
+WORKDIR /app
 
-COPY package*.json ./
-COPY tsconfig*.json ./
+COPY ["package*.json", "tsconfig*.json", "./"]
 COPY ./src ./src
 
 RUN npm install
 
-ADD . /usr/src/app
+ADD . /app
 
 RUN npm run build
 

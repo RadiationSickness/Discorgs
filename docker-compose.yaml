@@ -1,7 +1,5 @@
-version: "3"
-networks:
-  discorgs_network:
-    external: false
+version: "3.5"
+
 services:
   discorgs:
     networks:
@@ -13,3 +11,20 @@ services:
       dockerfile: Dockerfile
     ports:
       - 8080:8080
+    links:
+      - mongodb
+  mongodb:
+    image: mongo:4.4
+    networks:
+      - discorgs_network
+    ports:
+      - 27017:27017
+    volumes: 
+      - data:/data/db
+
+volumes: 
+  data:
+
+networks:
+  discorgs_network:
+    external: false
