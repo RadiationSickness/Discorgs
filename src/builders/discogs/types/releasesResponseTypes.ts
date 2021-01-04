@@ -3,7 +3,7 @@ export type ReleasesResponseType = {
     releases: ReleasesType[],
 }
 
-type PaginationType = {
+export type PaginationType = {
     page: number,
     pages: number,
     per_page: number,
@@ -18,11 +18,11 @@ export type ReleasesType = {
     id: number,
     instance_id: number,
     date_added: string,
-    rating: 0,
+    rating: number,
     basic_information: ReleasesBasicInfoType,
 }
 
-type ReleasesBasicInfoType = {
+export type ReleasesBasicInfoType = {
     id: number,
     master_id: number,
     master_url: string,
@@ -38,7 +38,7 @@ type ReleasesBasicInfoType = {
     styles: string[],
 }
 
-type ReleasesFormatsType = {
+export type ReleasesFormatsType = {
     name: string,
     qty: string,
     text: string,

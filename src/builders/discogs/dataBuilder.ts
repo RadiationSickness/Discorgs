@@ -1,15 +1,15 @@
-import { EmbedMessageType } from '../discord/discordTypes';
+import { ReleaseEmbedMessageType, UserEmbedMessageType } from '../discord/discordTypes';
 import { ReleasesArtistsType, ReleasesLabelsType, ReleasesType } from './types/releasesResponseTypes';
 import { Nullable } from '../../universalTypes';
 import { get } from 'lodash'
 import { UserResponseType } from './types/userResponseTypes';
 
 export class DiscogsDataBuilder {
-    public buildReleaseEmbedMessageData(discogsRelease: ReleasesType, userName: UserResponseType): EmbedMessageType {
-        const defaultColor: string = '#666666';
-        
+    private defaultColor: string = '#666666';
+
+    public buildReleaseEmbedMessageData(discogsRelease: ReleasesType, userName: UserResponseType): ReleaseEmbedMessageType {
         return {
-            color: process.env.DISCORD_MESSAGE_COLOR || defaultColor,
+            color: process.env.DISCORD_MESSAGE_COLOR || this.defaultColor,
             title: get(discogsRelease, 'basic_information.title', ''),
             userImage: get(userName, 'avatar_url', ''),
             url: get(discogsRelease, 'basic_information.master_url', ''),
@@ -20,6 +20,20 @@ export class DiscogsDataBuilder {
             genres: this.buildStringFromArray(get(discogsRelease, 'basic_information.genres', null)),
             styles: this.buildStringFromArray(get(discogsRelease, 'basic_information.styles', null)),
             year: get(discogsRelease, 'basic_information.year', 0),
+        }
+    }
+
+    public buildUserEmbedMessageData(
+        userName: string,
+        userImage?: string,
+        profileUri?: string,
+    ): UserEmbedMessageType {
+        return {
+            color: process.env.DISCORD_MESSAGE_COLOR || this.defaultColor,
+            profileUri: profileUri || '',
+            title: `${userName} successfully added!`,
+            userImage: userImage || '',
+            userName: userName,
         }
     }
 

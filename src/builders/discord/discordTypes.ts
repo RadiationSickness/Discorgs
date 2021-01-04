@@ -1,4 +1,4 @@
-export type EmbedMessageType = {
+export type ReleaseEmbedMessageType = {
     artist: string,
     color: string,
     genres: string,
@@ -10,4 +10,12 @@ export type EmbedMessageType = {
     userImage: string,
     userName: string,
     year: number
+}
+
+export type UserEmbedMessageType = {
+    color: string,
+    profileUri: string,
+    title: string,
+    userImage: string,
+    userName: string,
 }

@@ -9,6 +9,7 @@ export class MongodbService {
     constructor() {
         this.mongoose = new Mongoose;
         this.mongoose.set('bufferCommands', false);
+        this.mongoose.set('debug', false);
         this.initiate();
     }
 
@@ -21,13 +22,27 @@ export class MongodbService {
         }
     }
 
-    public async saveUser(discordUserName: string, discogsUserName: string): Promise<void> {
+    public async saveUser(
+        discordUserName: string,
+        discogsUserName: string,
+        discogsUserImage?: string,
+        discordUserProfileUri?: string,
+        lastCollectionItemId?: number,
+        lastWantListItemId?: number,
+    ): Promise<void> {
         if (!this.dbConnection || this.dbConnection.readyState !== 1) {
             this.dbConnection = await this.connect();
         }
 
         const User = this.dbConnection.model('User', userSchema);
-        const user = new User({ _id: discordUserName, discogsUserName: discogsUserName });
+        const user = new User({
+            _id: discordUserName,
+            discogsUserName,
+            discogsUserImage,
+            discordUserProfileUri,
+            lastCollectionItemId,
+            lastWantListItemId,
+        });
 
         try {
             await User.create(user);
@@ -35,6 +50,7 @@ export class MongodbService {
             console.error('Error while saving user!', err);
         }
 
+        await this.disconnect();
         return Promise.resolve();
     }
 
@@ -52,10 +68,11 @@ export class MongodbService {
             console.error('Error while retrieving users!', err);
         }
 
+        await this.disconnect();
         return Promise.resolve(response);
     }
 
-    public async getUserByID(userName :string): Promise<Document | null> {
+    public async getUserByID(userName: string): Promise<Nullable<Document>> {
         if (!this.dbConnection || this.dbConnection.readyState !== 1) {
             this.dbConnection = await this.connect();
         }
@@ -69,7 +86,73 @@ export class MongodbService {
             console.error('Error while retrieving users!', err);
         }
 
+        await this.disconnect();
         return Promise.resolve(response);
+    }
+
+    public async updateUserAttribute(userName: string, attribute: string, value: string|number): Promise<void> {
+        if (!this.dbConnection || this.dbConnection.readyState !== 1) {
+            this.dbConnection = await this.connect();
+        }
+
+        const User = this.dbConnection.model('User', userSchema);
+        const user: Nullable<Document> = await User.findOne({_id: userName});
+
+        if (user) {
+            try {
+                await user.update({ '$set': { [attribute]: value }});
+            } catch (err) {
+                console.error(`Error while updating attribute ${attribute} for user ${userName}!`, err);
+            }    
+        }
+
+        await this.disconnect();
+    }
+
+    public async removeUser(userName: string): Promise<void> {
+        if (!this.dbConnection || this.dbConnection.readyState !== 1) {
+            this.dbConnection = await this.connect();
+        } 
+
+        const User = this.dbConnection.model('User', userSchema);
+
+        try {
+            await User.findByIdAndRemove(userName);
+        } catch (err) {
+            console.error(`Error while removing entery with id: ${userName}!`, err);
+        }
+
+        await this.disconnect();
+    }
+
+    public async getRandomUser(): Promise<Nullable<Document>> {
+        let user: Nullable<Document> = null;
+
+        if (!this.dbConnection || this.dbConnection.readyState !== 1) {
+            this.dbConnection = await this.connect();
+        } 
+
+        const User = this.dbConnection.model('User', userSchema);
+
+        try {
+            await User.countDocuments({}, async (err, count) => {
+                const random = Math.floor(Math.random() * count);
+
+                User.findOne().skip(random).exec((err, result) => {
+                    if (err) {
+                        console.error(`Error while retrieving ranom user!`, err);
+                        return Promise.resolve(user);
+                    }
+
+                    user = result;
+                });
+            });
+        } catch (err) {
+            console.error(`Error while retrieving ranom user!`, err);
+        }
+
+        await this.disconnect();
+        return Promise.resolve(user);
     }
 
     private async connect(): Promise<Connection> {
@@ -78,7 +161,7 @@ export class MongodbService {
             {
                 useNewUrlParser: true,
                 useUnifiedTopology: true,
-                reconnectTries: 3,
+                useFindAndModify: false,
                 serverSelectionTimeoutMS: 5000,
             },
         );

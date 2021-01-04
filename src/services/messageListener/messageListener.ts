@@ -33,12 +33,14 @@ export class MessageListener {
         const userCommandString = messageContent.replace(`<@!${this.botId}>`, '').trim();
 
         const commandArray: string[] = Object.keys(messageCommands).filter((key) => {
-            return (messageCommands[key].toLowerCase().indexOf(userCommandString.toLowerCase()) > -1) || (userCommandString.toLowerCase().indexOf(messageCommands[key].toLowerCase()) > -1);
+            const cleanedCommand: string = this.cleanCommandOfParams(messageCommands[key]);
+            return (cleanedCommand.toLowerCase().indexOf(userCommandString.toLowerCase()) > -1) || (userCommandString.toLowerCase().indexOf(cleanedCommand.toLowerCase()) > -1);
         });
 
         if (commandArray && commandArray.length === 1) {
             const commandMethod: keyof Commands = commandArray[0] as keyof Commands;
-            const commandParam: Nullable<string> = userCommandString.replace(messageCommands[commandArray[0]], '').trim();
+            const paramFilter = this.cleanCommandOfParams(messageCommands[commandArray[0]]);
+            const commandParam: Nullable<string> = userCommandString.replace(paramFilter, '').trim();
 
             if (commandMethod) {
                 this.commands[commandMethod](commandParam);
@@ -48,6 +50,15 @@ export class MessageListener {
         }
 
         this.discordChannel?.send('Command not found! `@Discorgs help` will list valid commands.');
+    }
+
+    private cleanCommandOfParams(command: string): string {
+        const keyWordFilter: string[] = [
+            '<discord user name>, <discogs user name>',
+            '<discord user name>',
+        ];
+
+        return command.replace(keyWordFilter[0], '').replace(keyWordFilter[1], '').trim();
     }
 
     private messageContainsBotMention(message: Message): boolean {

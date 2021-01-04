@@ -6,12 +6,15 @@ import { Nullable } from '../../universalTypes';
 import { ReleasesResponseType, ReleasesType } from '../../builders/discogs/types/releasesResponseTypes';
 import { UserNotFoundResponse, UserResponseType } from '../../builders/discogs/types/userResponseTypes';
 import { DiscogsDataBuilder } from '../../builders/discogs/dataBuilder';
-import { EmbedMessageType } from '../../builders/discord/discordTypes';
+import { ReleaseEmbedMessageType, UserEmbedMessageType } from '../../builders/discord/discordTypes';
 import { DiscordDataBuilder } from '../../builders/discord/discordDataBuilder';
 import { messageCommands } from './listenerTypes';
+import { MongodbService } from '../mongodb/mongodbService';
+import { Document } from 'mongoose';
+import { WantsResponseType } from '../../builders/discogs/types/wantsResponseTypes';
+
 
 export class Commands {
-    private users: string[] = [];
     private discordChannel: Nullable<TextChannel>;
     private discogsDataBuilder: DiscogsDataBuilder;
     private discordDataBuilder: DiscordDataBuilder;
@@ -19,6 +22,7 @@ export class Commands {
 	constructor(
         private discogsService: DiscogsService,
         private discordService: DiscordService,
+        private dbService: MongodbService,
     ) {
         this.discordChannel = this.discordService.getTextChannel();
         this.discogsDataBuilder = new DiscogsDataBuilder();
@@ -35,98 +39,143 @@ export class Commands {
         this.discordChannel?.send(newMessage);
     }
 
-    public async addDiscogsUser(params?: string): Promise<void> {
-        if (params) {
-            if (this.users.includes(params)) {
+    public async addUser(params?: string): Promise<void> {
+        if (params && params.split(',').length === 2) {
+            const paramArray: string[] = params.split(',');
+            const discordUserName: string = paramArray[0].trim();
+            const discogsUserName: string = paramArray[1].trim();
+
+            if (!discordUserName || !discogsUserName) {
+                this.discordChannel?.send('Invalid parameters sent. Use the "help" command to list all commands with expected params.');
+                return;
+            }
+
+            const userId: Nullable<string> = this.discordService.getUserIdByName(discordUserName);
+            if (!userId) {
+                this.discordChannel?.send(`No Discord user found with username: ${discordUserName}`);
+                return;
+            }
+
+            const dbUser: Nullable<Document> = await this.dbService.getUserByID(userId);
+            if (dbUser) {
                 this.discordChannel?.send('User is already registered!');
                 return;
             }
 
-            const user: UserResponseType | UserNotFoundResponse = await this.discogsService.getUser(params);
-            if (user && this.discogsService.isErrorResponse(user)) {
-                this.discordChannel?.send(`User ${params} is not a valid Discogs user!`);
+            const discogUser: UserResponseType | UserNotFoundResponse = await this.discogsService.getUser(discogsUserName);
+            if (discogUser && this.discogsService.isErrorResponse(discogUser)) {
+                this.discordChannel?.send(`User ${discogsUserName} is not a valid Discogs user!`);
                 return;
             }
 
-            this.users.push(params);
-            const newMessage: string = `Added user ${params}`;
-            this.discordChannel?.send(newMessage);
+            this.discordChannel?.send('Retrieving data...');
+
+            const discordUserImage: string | undefined = discogUser.avatar_url || undefined;
+            const discordUserProfileUri: string | undefined = discogUser.uri || undefined;
+            const releaseResponse: ReleasesResponseType = await this.discogsService.getReleases(discogsUserName);
+            let releaseId: number | undefined;
+            if (releaseResponse && releaseResponse.releases.length > 0) {
+                releaseId = releaseResponse.releases[0].id;
+            }
+
+            const wantsResponse: WantsResponseType = await this.discogsService.getWants(discogsUserName);
+            let wantsId: number | undefined;
+            if (wantsResponse && wantsResponse.wants.length > 0) {
+                wantsId = wantsResponse.wants[0].id;
+            }
+
+            await this.dbService.saveUser(
+                userId,
+                discogsUserName,
+                discordUserImage,
+                discordUserProfileUri,
+                releaseId,
+                wantsId,
+            );
+
+            const embedParams: UserEmbedMessageType = this.discogsDataBuilder.buildUserEmbedMessageData(
+                discogsUserName,
+                discordUserImage,
+                discordUserProfileUri,
+            );
+            const embedMessage: MessageEmbed = this.discordDataBuilder.buildUserEmbedMessage(embedParams);
+
+            this.discordService.sendEmbed(embedMessage);
+            return;
         }
+
+        this.discordChannel?.send('Invalid parameters sent. Use the "help" command to list all commands with expected params.');
     }
 
-	public getDiscogsUsers(params?: string): void {
-		const messageBase = 'The following users are currently registered:\n';
-		const listIcon = ':loud_sound:';
-		const listLimit = 5;
-		let userCount = 0;
-		let newMessage: string = messageBase;
-
-		while (userCount < listLimit && userCount < this.users.length) {
-			newMessage = newMessage.concat(`   ${listIcon}  ${this.users[userCount]}\n`);
-			userCount++;
-		}
-
-        if (userCount === listLimit) {
-            const remainingUserCount = this.users.length - listLimit;
-            if (remainingUserCount === 1) {
-                newMessage = newMessage.concat(`Plus ${remainingUserCount} other...`);
-            } else if (remainingUserCount > 1) {
-                newMessage = newMessage.concat(`Plus ${remainingUserCount} others...`);
-            }
+    public async searchRegisteredUsers(params?: string): Promise<void> {
+        const discordUserName: string = params || '';
+        const userId: Nullable<string> = this.discordService.getUserIdByName(discordUserName);
+        if (!userId) {
+            this.discordChannel?.send(`No Discord user found with username: ${discordUserName}`);
+            return;
         }
 
-		if (newMessage === messageBase) {
-			newMessage = 'There are no users currently registered!';
-		}
-
-		this.discordChannel?.send(newMessage);
-	}
-
-    public searchRegisteredUsers(params?: string): void {
-        if (params && this.users.includes(params)) {
-            this.discordChannel?.send('User is registered.');
+        const dbUser: Nullable<Document> = await this.dbService.getUserByID(userId);
+        if (dbUser) {
+            this.discordChannel?.send('User is already registered!');
             return;
         }
 
         this.discordChannel?.send('User is not currently registered!');
     }
 
-    public removeDiscogsUser(params?: string): void {
-        if (params && this.users.includes(params)) {
-            const userIndex: number = this.users.indexOf(params);
-            if (userIndex > -1) {
-                this.users.splice(userIndex, 1);
-            }
-            this.discordChannel?.send('User removed successfully.');
-
+    public async removeUser(params?: string): Promise<void> {
+        const discordUserName: string = params || '';
+        const userId: Nullable<string> = this.discordService.getUserIdByName(discordUserName);
+        if (!userId) {
+            this.discordChannel?.send(`No Discord user found with username: ${discordUserName}`);
             return;
         }
 
-        this.discordChannel?.send('User is not currently registered!');
-    }
-
-    public async getLatestAdditionToCollection(params?: string): Promise<void> {
-        if (params && this.users.includes(params)) {
-            const collectionResponse: ReleasesResponseType = await this.discogsService.getReleases(params);
-            const user: UserResponseType = await this.discogsService.getUser(params); // @TODO: store user data on add to avoid unnecessary api call
-
-            const embedMessage: EmbedMessageType = this.discogsDataBuilder.buildReleaseEmbedMessageData(collectionResponse.releases[0], user);
-            const embed: MessageEmbed = this.discordDataBuilder.buildEmbedMessage(embedMessage, false);
-            this.discordService.sendEmbed(embed);
+        const dbUser: Nullable<Document> = await this.dbService.getUserByID(userId);
+        if (!dbUser) {
+            this.discordChannel?.send('User is not currently registered!');
+            return;
         }
+
+        await this.dbService.removeUser(userId);
+        this.discordChannel?.send('User removed successfully!');
     }
+
+    // public async getLatestAdditionToCollection(params?: string): Promise<void> {
+    //     if (params && this.users.includes(params)) {
+    //         const collectionResponse: ReleasesResponseType = await this.discogsService.getReleases(params);
+    //         const user: UserResponseType = await this.discogsService.getUser(params); // @TODO: store user data on add to avoid unnecessary api call
+
+    //         const embedMessage: EmbedMessageType = this.discogsDataBuilder.buildReleaseEmbedMessageData(collectionResponse.releases[0], user);
+    //         const embed: MessageEmbed = this.discordDataBuilder.buildEmbedMessage(embedMessage, false);
+    //         this.discordService.sendEmbed(embed);
+    //     }
+    // }
 
     public async getRandomRelease(params?: string): Promise<void> {
-        const user: string = this.users[Math.floor(Math.random() * this.users.length)];
-        const collectionResponse: ReleasesResponseType = await this.discogsService.getReleases(user);
-        const discogsUser: UserResponseType = await this.discogsService.getUser(user); // @TODO: store user data on add to avoid unnecessary api call
+        const user: Nullable<Document> = await this.dbService.getRandomUser() as any;
+        if (!user) {
+            this.discordChannel?.send('No users currently registered!');
+            return;
+        }
+
+        const userObj = user.toObject({ getters: true, virtuals: false }) as any;
+
+        if (!userObj.discogsUserName) {
+            this.discordChannel?.send(`User with ID: ${userObj._id} has not assocaited Discord username!`);
+            return;
+        }
+
+        const collectionResponse: ReleasesResponseType = await this.discogsService.getReleases(userObj.discogsUserName);
+        const discogsUser: UserResponseType = await this.discogsService.getUser(userObj.discogsUserName); // @TODO: store user data on add to avoid unnecessary api call
        
         if (collectionResponse && collectionResponse.releases && collectionResponse.releases.length > 0) {
             const releaseCollection: ReleasesType[] = collectionResponse.releases;
             const randomRelease: ReleasesType = releaseCollection[Math.floor(Math.random() * releaseCollection.length)];
 
-            const embedMessage: EmbedMessageType = this.discogsDataBuilder.buildReleaseEmbedMessageData(randomRelease, discogsUser);
-            const embed: MessageEmbed = this.discordDataBuilder.buildEmbedMessage(embedMessage, false);
+            const embedMessage: ReleaseEmbedMessageType = this.discogsDataBuilder.buildReleaseEmbedMessageData(randomRelease, discogsUser);
+            const embed: MessageEmbed = this.discordDataBuilder.buildReleaseEmbedMessage(embedMessage, false);
             this.discordService.sendEmbed(embed);
         }
     }

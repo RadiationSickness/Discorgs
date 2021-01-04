@@ -1,5 +1,5 @@
 import { MessageEmbed, MessageAttachment } from 'discord.js';
-import { EmbedMessageType } from './discordTypes';
+import { ReleaseEmbedMessageType, UserEmbedMessageType } from './discordTypes';
 import { Assets } from '../../builders/discord/assets';
 
 export class DiscordDataBuilder {
@@ -12,9 +12,19 @@ export class DiscordDataBuilder {
 			new MessageAttachment('./src/assets/discorgIcon.jpg', 'discorgIcon.jpg')
 		);
 		this.staticAssets = [...assets.staticAssets];
-	}
+    }
+    
+    public buildUserEmbedMessage(params: UserEmbedMessageType): MessageEmbed {
+        return new MessageEmbed()
+            .setColor(params.color)
+            .setTitle(params.title)
+            .setURL(params.profileUri)
+            .setAuthor('Discorgs', 'attachment://discorgIcon.jpg')
+            .setThumbnail(params.userImage)
+            .setTimestamp();
+    }
 
-    public buildEmbedMessage(params: EmbedMessageType, collectionUpdate: boolean = false): MessageEmbed {
+    public buildReleaseEmbedMessage(params: ReleaseEmbedMessageType, collectionUpdate: boolean = false): MessageEmbed {
         const embed: MessageEmbed = new MessageEmbed()
             .setColor(params.color)
             .setTitle(params.title)

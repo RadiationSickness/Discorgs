@@ -51,4 +51,12 @@ export class DiscordService {
     public getTextChannel():Nullable<TextChannel> {
         return this.textChannel ? this.textChannel : null;
     }
+
+    public getUserIdByName(username: string): Nullable<string> {
+        const user = this.discordClient.users.cache.find((u) => {
+            return u.username === username;
+        });
+
+        return user && user?.id ? user.id : null;
+    }
 }
