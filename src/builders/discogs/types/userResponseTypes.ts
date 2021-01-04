@@ -38,3 +38,8 @@ export type UserResponseType = {
 export type UserNotFoundResponse = {
     message: string,
 }
+
+export type UserEmbedData = {
+    userName: string,
+    userImage: string,
+}

@@ -4,7 +4,7 @@ import { DiscogsService } from '../discogs/discogsService';
 import { DiscordService } from '../discord/discrodService';
 import { Nullable } from '../../universalTypes';
 import { ReleasesResponseType, ReleasesType } from '../../builders/discogs/types/releasesResponseTypes';
-import { UserNotFoundResponse, UserResponseType } from '../../builders/discogs/types/userResponseTypes';
+import { UserEmbedData, UserNotFoundResponse, UserResponseType } from '../../builders/discogs/types/userResponseTypes';
 import { DiscogsDataBuilder } from '../../builders/discogs/dataBuilder';
 import { ReleaseEmbedMessageType, UserEmbedMessageType } from '../../builders/discord/discordTypes';
 import { DiscordDataBuilder } from '../../builders/discord/discordDataBuilder';
@@ -142,16 +142,29 @@ export class Commands {
         this.discordChannel?.send('User removed successfully!');
     }
 
-    // public async getLatestAdditionToCollection(params?: string): Promise<void> {
-    //     if (params && this.users.includes(params)) {
-    //         const collectionResponse: ReleasesResponseType = await this.discogsService.getReleases(params);
-    //         const user: UserResponseType = await this.discogsService.getUser(params); // @TODO: store user data on add to avoid unnecessary api call
+    public async getLatestAdditionToCollection(params?: string): Promise<void> {
+        const user: Nullable<Document> = await this.dbService.getRandomUser() as any;
+        if (!user) {
+            this.discordChannel?.send('No users currently registered!');
+            return;
+        }
 
-    //         const embedMessage: EmbedMessageType = this.discogsDataBuilder.buildReleaseEmbedMessageData(collectionResponse.releases[0], user);
-    //         const embed: MessageEmbed = this.discordDataBuilder.buildEmbedMessage(embedMessage, false);
-    //         this.discordService.sendEmbed(embed);
-    //     }
-    // }
+        const userObj = user.toObject({ getters: true, virtuals: false }) as any;
+
+        if (!userObj.discogsUserName) {
+            this.discordChannel?.send(`User with ID: ${userObj._id} has not assocaited Discord username!`);
+            return;
+        }
+
+        const discogsUser: UserEmbedData = {
+            userName: userObj.discogsUserImage,
+            userImage: userObj.discogsUserName,
+        };
+        const collectionResponse: ReleasesResponseType = await this.discogsService.getReleases(userObj.discogsUserName);
+        const embedMessage: ReleaseEmbedMessageType = this.discogsDataBuilder.buildReleaseEmbedMessageData(collectionResponse.releases[0], discogsUser);
+        const embed: MessageEmbed = this.discordDataBuilder.buildReleaseEmbedMessage(embedMessage, false);
+        this.discordService.sendEmbed(embed);
+    }
 
     public async getRandomRelease(params?: string): Promise<void> {
         const user: Nullable<Document> = await this.dbService.getRandomUser() as any;
@@ -168,11 +181,14 @@ export class Commands {
         }
 
         const collectionResponse: ReleasesResponseType = await this.discogsService.getReleases(userObj.discogsUserName);
-        const discogsUser: UserResponseType = await this.discogsService.getUser(userObj.discogsUserName); // @TODO: store user data on add to avoid unnecessary api call
-       
+
         if (collectionResponse && collectionResponse.releases && collectionResponse.releases.length > 0) {
             const releaseCollection: ReleasesType[] = collectionResponse.releases;
             const randomRelease: ReleasesType = releaseCollection[Math.floor(Math.random() * releaseCollection.length)];
+            const discogsUser: UserEmbedData = {
+                userName: userObj.discogsUserImage,
+                userImage: userObj.discogsUserName,
+            };
 
             const embedMessage: ReleaseEmbedMessageType = this.discogsDataBuilder.buildReleaseEmbedMessageData(randomRelease, discogsUser);
             const embed: MessageEmbed = this.discordDataBuilder.buildReleaseEmbedMessage(embedMessage, false);

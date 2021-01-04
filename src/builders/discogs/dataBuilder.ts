@@ -2,12 +2,12 @@ import { ReleaseEmbedMessageType, UserEmbedMessageType } from '../discord/discor
 import { ReleasesArtistsType, ReleasesLabelsType, ReleasesType } from './types/releasesResponseTypes';
 import { Nullable } from '../../universalTypes';
 import { get } from 'lodash'
-import { UserResponseType } from './types/userResponseTypes';
+import { UserEmbedData } from './types/userResponseTypes';
 
 export class DiscogsDataBuilder {
     private defaultColor: string = '#666666';
 
-    public buildReleaseEmbedMessageData(discogsRelease: ReleasesType, userName: UserResponseType): ReleaseEmbedMessageType {
+    public buildReleaseEmbedMessageData(discogsRelease: ReleasesType, userName: UserEmbedData): ReleaseEmbedMessageType {
         return {
             color: process.env.DISCORD_MESSAGE_COLOR || this.defaultColor,
             title: get(discogsRelease, 'basic_information.title', ''),
