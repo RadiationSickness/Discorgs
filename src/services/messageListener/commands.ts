@@ -18,6 +18,7 @@ export class Commands {
     private discordChannel: Nullable<TextChannel>;
     private discogsDataBuilder: DiscogsDataBuilder;
     private discordDataBuilder: DiscordDataBuilder;
+    private userLimit: number = 500;
 
 	constructor(
         private discogsService: DiscogsService,
@@ -59,6 +60,12 @@ export class Commands {
             const dbUser: Nullable<Document> = await this.dbService.getUserByID(userId);
             if (dbUser) {
                 this.discordChannel?.send('User is already registered!');
+                return;
+            }
+
+            const userCount: number = await this.dbService.getUserCount();
+            if (userCount >= this.userLimit) {
+                this.discordChannel?.send('Maximum registered users reached! Please remove clean out old users if you wish to add more.');
                 return;
             }
 
@@ -150,7 +157,6 @@ export class Commands {
         }
 
         const userObj = user.toObject({ getters: true, virtuals: false }) as any;
-
         if (!userObj.discogsUserName) {
             this.discordChannel?.send(`User with ID: ${userObj._id} has not assocaited Discord username!`);
             return;
@@ -166,6 +172,7 @@ export class Commands {
         this.discordService.sendEmbed(embed);
     }
 
+    // @TODO: updated to get random page from release, currently is only random to the top 50 recently added releases
     public async getRandomRelease(params?: string): Promise<void> {
         const user: Nullable<Document> = await this.dbService.getRandomUser() as any;
         if (!user) {
@@ -174,14 +181,12 @@ export class Commands {
         }
 
         const userObj = user.toObject({ getters: true, virtuals: false }) as any;
-
         if (!userObj.discogsUserName) {
             this.discordChannel?.send(`User with ID: ${userObj._id} has not assocaited Discord username!`);
             return;
         }
 
         const collectionResponse: ReleasesResponseType = await this.discogsService.getReleases(userObj.discogsUserName);
-
         if (collectionResponse && collectionResponse.releases && collectionResponse.releases.length > 0) {
             const releaseCollection: ReleasesType[] = collectionResponse.releases;
             const randomRelease: ReleasesType = releaseCollection[Math.floor(Math.random() * releaseCollection.length)];

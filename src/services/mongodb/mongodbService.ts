@@ -5,6 +5,7 @@ import { userSchema } from './models/users';
 export class MongodbService {
     private mongoose: Mongoose;
     private dbConnection: Connection | undefined;
+    private userLimit: number = 500;
 
     constructor() {
         this.mongoose = new Mongoose;
@@ -32,6 +33,12 @@ export class MongodbService {
     ): Promise<void> {
         if (!this.dbConnection || this.dbConnection.readyState !== 1) {
             this.dbConnection = await this.connect();
+        }
+
+        const userCount: number = await this.getUserCount();
+        if (userCount >= this.userLimit) {
+            await this.disconnect();
+            return Promise.resolve();
         }
 
         const User = this.dbConnection.model('User', userSchema);
@@ -90,6 +97,36 @@ export class MongodbService {
         return Promise.resolve(response);
     }
 
+    public async getAllUserIDs(): Promise<string[]> {
+        const idArray: string[] = [];
+        if (!this.dbConnection || this.dbConnection.readyState !== 1) {
+            this.dbConnection = await this.connect();
+        }
+
+        const User = this.dbConnection.model('User', userSchema);
+
+        try {
+            await User.find({}, async (err, users) => {
+                if (err) {
+                    console.error('Error while retrieving all users!', err);
+                    await this.disconnect();
+                    return Promise.resolve(idArray);
+                }
+
+                if (users && users.length > 0) {
+                    users.forEach((user) => {
+                        idArray.push(user._id);
+                    });
+                }
+            });
+        } catch (err) {
+            console.error('Error while retrieving all users!', err);
+        }
+
+        await this.disconnect();
+        return Promise.resolve(idArray);
+    }
+
     public async updateUserAttribute(userName: string, attribute: string, value: string|number): Promise<void> {
         if (!this.dbConnection || this.dbConnection.readyState !== 1) {
             this.dbConnection = await this.connect();
@@ -125,6 +162,33 @@ export class MongodbService {
         await this.disconnect();
     }
 
+    public async getUserCount(): Promise<number> {
+        const errMessage: string = 'Error while retrieving user count!';
+        let userCount: number = 0;
+
+        if (!this.dbConnection || this.dbConnection.readyState !== 1) {
+            this.dbConnection = await this.connect();
+        } 
+
+        const User = this.dbConnection.model('User', userSchema);
+
+        try {
+            await User.countDocuments({}, async (err, count) => {
+                if (err) {
+                    console.error(errMessage, err);
+                    await this.disconnect();
+                    return Promise.resolve(userCount);
+                }
+                userCount = count;
+            });
+        } catch (err) {
+            console.error(errMessage, err);
+        }
+
+        await this.disconnect();
+        return Promise.resolve(userCount);
+    }
+
     public async getRandomUser(): Promise<Nullable<Document>> {
         let user: Nullable<Document> = null;
 
@@ -138,9 +202,10 @@ export class MongodbService {
             await User.countDocuments({}, async (err, count) => {
                 const random = Math.floor(Math.random() * count);
 
-                User.findOne().skip(random).exec((err, result) => {
+                User.findOne().skip(random).exec(async (err, result) => {
                     if (err) {
                         console.error(`Error while retrieving ranom user!`, err);
+                        await this.disconnect();
                         return Promise.resolve(user);
                     }
 

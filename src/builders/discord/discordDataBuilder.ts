@@ -24,7 +24,7 @@ export class DiscordDataBuilder {
             .setTimestamp();
     }
 
-    public buildReleaseEmbedMessage(params: ReleaseEmbedMessageType, collectionUpdate: boolean = false): MessageEmbed {
+    public buildReleaseEmbedMessage(params: ReleaseEmbedMessageType, collectionUpdate: boolean = true): MessageEmbed {
         const embed: MessageEmbed = new MessageEmbed()
             .setColor(params.color)
             .setTitle(params.title)

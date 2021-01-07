@@ -7,14 +7,15 @@ import { UserEmbedData } from './types/userResponseTypes';
 export class DiscogsDataBuilder {
     private defaultColor: string = '#666666';
 
-    public buildReleaseEmbedMessageData(discogsRelease: ReleasesType, userName: UserEmbedData): ReleaseEmbedMessageType {
+    // @TODO: build uri for url param: https://discogs.com/{{artistName}}-{{releaseTitle}}/release/{{releaseID}}
+    public buildReleaseEmbedMessageData(discogsRelease: ReleasesType, userData: UserEmbedData): ReleaseEmbedMessageType {
         return {
             color: process.env.DISCORD_MESSAGE_COLOR || this.defaultColor,
             title: get(discogsRelease, 'basic_information.title', ''),
-            userImage: get(userName, 'avatar_url', ''),
-            url: get(discogsRelease, 'basic_information.master_url', ''),
+            userImage: get(userData, 'avatar_url', ''),
+            url: get(discogsRelease, 'basic_information.resource_url', ''),
             mediaImage: get(discogsRelease, 'basic_information.cover_image', ''),
-            userName: get(userName, 'username', ''),
+            userName: get(userData, 'username', ''),
             artist: this.getArtistOrLabelNames(get(discogsRelease, 'basic_information.artists', null)),
             labels: this.getArtistOrLabelNames(get(discogsRelease, 'basic_information.labels', null)),
             genres: this.buildStringFromArray(get(discogsRelease, 'basic_information.genres', null)),

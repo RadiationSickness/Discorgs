@@ -6,19 +6,16 @@ import { DiscogsDataBuilder } from './builders/discogs/dataBuilder';
 import { MessageListener } from './services/messageListener/messageListener';
 import { Commands } from './services/messageListener/commands';
 import { MongodbService } from './services/mongodb/mongodbService';
+import { DiscogsPollingService } from './services/discogs/discogsPollingService';
 
 export class Discorg {
-    public discogsService: DiscogsService;
-    public discordService: DiscordService;
-    public discordDataBuilder: DiscordDataBuilder;
-    public discogsDataBuilder: DiscogsDataBuilder;
-    public mongodbService: MongodbService;
+    private discogsService: DiscogsService;
+    private discordService: DiscordService;
+    private mongodbService: MongodbService;
 
     constructor() {
         this.discogsService = new DiscogsService();
         this.discordService = new DiscordService();
-        this.discordDataBuilder = new DiscordDataBuilder();
-        this.discogsDataBuilder = new DiscogsDataBuilder();
         this.mongodbService = new MongodbService();
     }
 
@@ -28,23 +25,22 @@ export class Discorg {
 
             if (status) {
                 console.log('Initializing...');
+                const pollingService: DiscogsPollingService = new DiscogsPollingService(
+                    this.discogsService,
+                    this.discordService,
+                    this.mongodbService,
+                );
                 const commandsInstance: Commands = new Commands(
                     this.discogsService,
                     this.discordService,
                     this.mongodbService,
                 );
-                const messageListener = new MessageListener(
+                const messageListener: MessageListener = new MessageListener(
                     this.discordService,
                     commandsInstance,
                 );
                 messageListener.startMessageListener();
-                console.log('Ready');
-                // const response: ReleasesResponseType = await this.discogsService.getReleases('Tyharo');
-                // const user: UserResponseType = await this.discogsService.getUser('Tyharo');
-
-                // const singleEmbedData: EmbedMessageType = this.discogsDataBuilder.buildReleaseEmbedMessageData(response.releases[0], user);
-                // const messageEmbed: MessageEmbed = this.discordDataBuilder.buildEmbedMessage(singleEmbedData);
-                // this.discordService.sendEmbed(messageEmbed);
+                pollingService.initiatePolling();
             }
         });
     }
