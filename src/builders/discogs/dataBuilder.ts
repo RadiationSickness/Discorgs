@@ -1,26 +1,47 @@
-import { ReleaseEmbedMessageType, UserEmbedMessageType } from '../discord/discordTypes';
+import { ReleaseEmbedMessageType, UserEmbedMessageType, WantsEmbedMessageType } from '../discord/discordTypes';
 import { ReleasesArtistsType, ReleasesLabelsType, ReleasesType } from './types/releasesResponseTypes';
 import { Nullable } from '../../universalTypes';
 import { get } from 'lodash'
 import { UserEmbedData } from './types/userResponseTypes';
+import { WantsType } from './types/wantsResponseTypes';
 
 export class DiscogsDataBuilder {
     private defaultColor: string = '#666666';
 
-    // @TODO: build uri for url param: https://discogs.com/{{artistName}}-{{releaseTitle}}/release/{{releaseID}}
     public buildReleaseEmbedMessageData(discogsRelease: ReleasesType, userData: UserEmbedData): ReleaseEmbedMessageType {
+        const baseUri: string = 'https://www.discogs.com/release/';
+        const releaseId: string = get(discogsRelease, 'id', '').toString();
+
         return {
-            color: process.env.DISCORD_MESSAGE_COLOR || this.defaultColor,
+            color: process.env.DISCORD_COLLECTION_ADDITION_COLOR || this.defaultColor,
             title: get(discogsRelease, 'basic_information.title', ''),
-            userImage: get(userData, 'avatar_url', ''),
-            url: get(discogsRelease, 'basic_information.resource_url', ''),
+            userImage: get(userData, 'userImage', ''),
+            url: `${baseUri}${releaseId}`,
             mediaImage: get(discogsRelease, 'basic_information.cover_image', ''),
-            userName: get(userData, 'username', ''),
-            artist: this.getArtistOrLabelNames(get(discogsRelease, 'basic_information.artists', null)),
-            labels: this.getArtistOrLabelNames(get(discogsRelease, 'basic_information.labels', null)),
-            genres: this.buildStringFromArray(get(discogsRelease, 'basic_information.genres', null)),
-            styles: this.buildStringFromArray(get(discogsRelease, 'basic_information.styles', null)),
+            userName: get(userData, 'userName', ''),
+            artist: this.getArtistOrLabelNames(get(discogsRelease, 'basic_information.artists', null)) || 'none',
+            labels: this.getArtistOrLabelNames(get(discogsRelease, 'basic_information.labels', null)) || 'none',
+            genres: this.buildStringFromArray(get(discogsRelease, 'basic_information.genres', null)) || 'none',
+            styles: this.buildStringFromArray(get(discogsRelease, 'basic_information.styles', null)) || 'none',
             year: get(discogsRelease, 'basic_information.year', 0),
+        }
+    }
+
+    public buildWantsEmbedMessageData(discogsRelease: WantsType, userData: UserEmbedData): WantsEmbedMessageType {
+        const baseUri: string = 'https://www.discogs.com/release/';
+        const releaseId: string = get(discogsRelease, 'id', '').toString();
+
+        const artist: string = this.getArtistOrLabelNames(get(discogsRelease, 'basic_information.artists', null)) || 'none';
+        const title: string = get(discogsRelease, 'basic_information.title', '');
+        const embedTitle = `${artist} - ${title}`;
+
+        return {
+            color: process.env.DISCORD_WANT_ADDITION_COLOR || this.defaultColor,
+            title: embedTitle,
+            userImage: get(userData, 'userImage', ''),
+            url: `${baseUri}${releaseId}`,
+            userName: get(userData, 'userName', ''),
+            artist,
         }
     }
 
@@ -30,7 +51,7 @@ export class DiscogsDataBuilder {
         profileUri?: string,
     ): UserEmbedMessageType {
         return {
-            color: process.env.DISCORD_MESSAGE_COLOR || this.defaultColor,
+            color: process.env.DISCORD_USER_ADDED_COLOR || this.defaultColor,
             profileUri: profileUri || '',
             title: `${userName} successfully added!`,
             userImage: userImage || '',

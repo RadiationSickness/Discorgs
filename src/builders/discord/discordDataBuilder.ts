@@ -1,5 +1,5 @@
 import { MessageEmbed, MessageAttachment } from 'discord.js';
-import { ReleaseEmbedMessageType, UserEmbedMessageType } from './discordTypes';
+import { ReleaseEmbedMessageType, UserEmbedMessageType, WantsEmbedMessageType } from './discordTypes';
 import { Assets } from '../../builders/discord/assets';
 
 export class DiscordDataBuilder {
@@ -47,6 +47,27 @@ export class DiscordDataBuilder {
             { name: 'Styles', value: params.styles, inline: true },
         );
         embed.setImage(params.mediaImage);
+        embed.setTimestamp();
+        embed.setFooter('Dircorgs thinks you should buy more records', 'attachment://discogsIcon.png');
+
+        return embed;
+    }
+
+    public buildWantEmbedMessage(params: WantsEmbedMessageType, wantsUpdate: boolean = true): MessageEmbed {
+        const embed: MessageEmbed = new MessageEmbed()
+            .setColor(params.color)
+            .setTitle(params.title)
+            .attachFiles(this.staticAssets)
+            .setURL(params.url)
+            .setAuthor('Discorgs', 'attachment://discorgIcon.jpg')
+            .setThumbnail(params.userImage);
+
+        if (wantsUpdate) {
+            embed.setDescription(`${params.userName} added ${params.title} by ${params.artist} to their want list!`);
+        } else {
+            embed.setDescription(`${params.userName} wants ${params.title} by ${params.artist}!`);
+        }
+        
         embed.setTimestamp();
         embed.setFooter('Dircorgs thinks you should buy more records', 'attachment://discogsIcon.png');
 

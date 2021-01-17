@@ -12,6 +12,15 @@ export type ReleaseEmbedMessageType = {
     year: number
 }
 
+export type WantsEmbedMessageType = {
+    artist: string,
+    color: string,
+    title: string,
+    url: string,
+    userImage: string,
+    userName: string,
+}
+
 export type UserEmbedMessageType = {
     color: string,
     profileUri: string,

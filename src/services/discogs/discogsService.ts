@@ -16,12 +16,13 @@ export class DiscogsService {
     }
 
     public async getWants(user: string): Promise<any> {
-      const endPoint: string = `/users/${user}/wants`;
+      const queryParams = '?sort=added&sort_order=desc&per_page=100&';
+      const endPoint: string = `/users/${user}/wants${queryParams}`;
       return await this.get(endPoint);
     }
 
     public async getReleases(user: string): Promise<any> {
-      const queryParams = '?sort=added&sort_order=desc';
+      const queryParams = '?sort=added&sort_order=desc&per_page=100';
       const endPoint: string = `/users/${user}/collection/folders/0/releases${queryParams}`;
       return await this.get(endPoint, true);
     }
@@ -30,6 +31,11 @@ export class DiscogsService {
       const endPoint: string = `/users/${user}/collection/folders`;
       return await this.get(endPoint);
     };
+
+    public async getCollectionItemByRelease(user:string, releaseId: string): Promise<any> {
+      const endPoint: string = `/users/${user}/collection/releases/${releaseId}`;
+      return await this.get(endPoint);
+    }
 
     public isErrorResponse(response: any): response is UserNotFoundResponse {
       return response.message !== undefined;
