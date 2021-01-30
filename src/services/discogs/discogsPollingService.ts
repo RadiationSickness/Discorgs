@@ -57,7 +57,6 @@ export class DiscogsPollingService {
 
         if (dbUser && dbUser.discogsUserName) {
             const discogsReleases: ReleasesResponseType = await this.discogsService.getReleases(dbUser.discogsUserName);
-            // @TODO: change message color: add -> green, notifications -> blue, wants -> orange
             const discogsWants: WantsResponseType = await this.discogsService.getWants(dbUser.discogsUserName);
             const userData: UserEmbedData = {
                 userName: dbUser.discogsUserName,
